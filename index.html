@@ -469,9 +469,17 @@ nav.is-scrollable:not(.at-end)::after{opacity:1}
 
 <script>
 (function(){
-  /* ── Códigos permitidos (hash SHA-256). Cambiar/añadir: en la consola
-     ejecuta  elsHash('nuevo-codigo')  y pega el hash en ALLOWED.
-     Activos: "elsamics" y "mojitada". ── */
+  /* ── Códigos de acceso ──────────────────────────────────────
+     1) Código DIARIO: cambia solo cada día (a las 00:00 UTC). Es el
+        que repartes a diario entre el grupo. Se calcula a partir de
+        SALT + la fecha, así que si se filtra deja de servir mañana.
+        Para saber el código de hoy: abre la consola del navegador y
+        ejecuta  elsCodigos()  (o usa el archivo generador-codigos.html).
+     2) Códigos FIJOS (ALLOWED): respaldo permanente por si te quedas
+        fuera. Para cambiarlos: en consola ejecuta elsHash('tu-codigo')
+        y pega el hash aquí. Si quieres SOLO código diario, vacía ALLOWED.
+     IMPORTANTE: si cambias SALT, cámbialo igual en generador-codigos.html. */
+  var SALT="els-amics-2026-r7Qx9";
   var ALLOWED=[
     "c09f254ec32b7418ba9bb8673f8f30cc2f230565cbc2ba416fd6e7a26486d7dc",
     "61b395801bf17c9ff77e2ff3186fe5f05c1d6972f12e94ce14e32812ef36178c"
@@ -488,6 +496,23 @@ nav.is-scrollable:not(.at-end)::after{opacity:1}
   async function sha256(s){var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
     return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');}
   window.elsHash=function(s){sha256(s).then(function(h){console.log('Hash de "'+s+'":\n'+h);});};
+
+  /* ── Código diario: depende de SALT + fecha (UTC), igual para todos ── */
+  function utcDayString(offset){
+    var d=new Date();
+    d.setUTCDate(d.getUTCDate()+(offset||0));
+    return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
+  }
+  async function dailyCode(offset){
+    var h=await sha256(SALT+'|'+utcDayString(offset));
+    return parseInt(h.slice(0,10),16).toString(36).slice(0,6); // 6 caracteres (letras+números)
+  }
+  /* helper para ti: elsCodigos()  ó  elsCodigos(7) para ver los próximos días */
+  window.elsCodigos=async function(n){
+    n=n||5;var out=[];
+    for(var i=0;i<n;i++){out.push(utcDayString(i)+'  →  '+(await dailyCode(i)));}
+    console.log('Códigos de acceso (UTC):\n'+out.join('\n'));
+  };
 
   function setFill(p){fill.style.width=(p*100).toFixed(1)+'%';}
   setFill(0);
@@ -506,7 +531,8 @@ nav.is-scrollable:not(.at-end)::after{opacity:1}
     if(!v){fail('Escribe el código primero.');return;}
     hint.classList.remove('err');hint.textContent='';label.textContent='Verificando…';
     var h=await sha256(v);
-    if(ALLOWED.indexOf(h)!==-1){try{sessionStorage.setItem('els_ok','1');}catch(e){}enter();}
+    var hoy=await dailyCode(0);
+    if(ALLOWED.indexOf(h)!==-1 || v===hoy){try{sessionStorage.setItem('els_ok','1');}catch(e){}enter();}
     else fail();
   }
 
