@@ -475,15 +475,13 @@ nav.is-scrollable:not(.at-end)::after{opacity:1}
         SALT + la fecha, así que si se filtra deja de servir mañana.
         Para saber el código de hoy: abre la consola del navegador y
         ejecuta  elsCodigos()  (o usa el archivo generador-codigos.html).
-     2) Códigos FIJOS (ALLOWED): respaldo permanente por si te quedas
-        fuera. Para cambiarlos: en consola ejecuta elsHash('tu-codigo')
-        y pega el hash aquí. Si quieres SOLO código diario, vacía ALLOWED.
+     2) Códigos FIJOS (ALLOWED): respaldo permanente opcional. Está VACÍO,
+        así que ahora SOLO funciona el código diario. Si quisieras un código
+        maestro privado de respaldo (no uno fácil como antes), en consola
+        ejecuta elsHash('tu-codigo-secreto') y pega el hash dentro de ALLOWED.
      IMPORTANTE: si cambias SALT, cámbialo igual en generador-codigos.html. */
   var SALT="els-amics-2026-r7Qx9";
-  var ALLOWED=[
-    "c09f254ec32b7418ba9bb8673f8f30cc2f230565cbc2ba416fd6e7a26486d7dc",
-    "61b395801bf17c9ff77e2ff3186fe5f05c1d6972f12e94ce14e32812ef36178c"
-  ];
+  var ALLOWED=[];
 
   var gate=document.getElementById('gate'),inner=document.getElementById('axInner'),
       field=document.getElementById('axField'),input=document.getElementById('axInput'),
