@@ -1506,6 +1506,218 @@ function showPage(id) {
       }
     });
   })();
+
+  /* ─── Easter egg: teclea "chupito" / "salud" → Alcoholímetro ─── */
+  (function(){
+    var SECRETS = ['chupito','salud'], MAXLEN = 7, buf = '';
+
+    /* ranking de alcoholemia del grupo (tasa g/L + frase por nivel) */
+    var ALC = [
+      {a:'Foc',        t:2.7,  f:'Tengo mucho dinero y molt patrimoni.'},
+      {a:'Plana',      t:2.6,  f:'Tengo mucho dinero y molt patrimoni.'},
+      {a:'Tost',       t:2.3,  f:'Menjeu-vos la boca entre vosaltres.'},
+      {a:'George Flat',t:2.2,  f:'Menjeu-vos la boca entre vosaltres.'},
+      {a:'Rin Rin',    t:1.9,  f:'Vaig molt calent.'},
+      {a:'Sange',      t:1.8,  f:'Vaig molt calent.'},
+      {a:'Bala',       t:1.5,  f:'\u00bfSabes qui\u00e9n es mi padre?'},
+      {a:'Pato',       t:1.4,  f:'\u00bfSabes qui\u00e9n es mi padre?'},
+      {a:'Mola',       t:1.1,  f:'Va, l\u2019\u00faltima i marxem.'},
+      {a:'El Moro',    t:1.0,  f:'Va, l\u2019\u00faltima i marxem.'},
+      {a:'Churumbel',  t:0.95, f:'Va, l\u2019\u00faltima i marxem.'},
+      {a:'Didi',       t:0.4,  f:'Em truca la novia.'},
+      {a:'Prat',       t:0.35, f:'Em truca la novia.'},
+      {a:'Minguell',   t:null, f:'Senyal perduda. \u00daltima localitzaci\u00f3: el tractor.'}
+    ];
+    function crestOf(alias){
+      try{
+        for(var i=0;i<TOTY_DATA.length;i++){ if(TOTY_DATA[i].alias===alias) return TOTY_DATA[i].crest||''; }
+      }catch(e){}
+      return '';
+    }
+
+    function injectStyles(){
+      if(document.getElementById('bz-style')) return;
+      var s = document.createElement('style');
+      s.id = 'bz-style';
+      s.textContent =
+        '#bz-overlay{position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px;'+
+        'background:radial-gradient(circle at center,rgba(8,14,30,.88),rgba(0,0,0,.96));backdrop-filter:blur(5px);'+
+        '-webkit-backdrop-filter:blur(5px);animation:bz-fade .45s ease both}'+
+        '@keyframes bz-fade{from{opacity:0}to{opacity:1}}'+
+        '@keyframes bz-rise{0%{opacity:0;transform:translateY(26px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}'+
+        '.bz-device{position:relative;width:min(330px,90vw);padding:30px 22px 22px;border-radius:26px;text-align:center;'+
+        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#e8eefc;'+
+        'background:linear-gradient(165deg,#20283c,#0e1422);border:1px solid rgba(255,255,255,.08);'+
+        'box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);animation:bz-rise .55s cubic-bezier(.16,1,.3,1) both}'+
+        '.bz-device::before{content:"";position:absolute;top:-13px;left:50%;transform:translateX(-50%);width:54px;height:16px;'+
+        'border-radius:8px 8px 0 0;background:linear-gradient(180deg,#2c3550,#1a2236);border:1px solid rgba(255,255,255,.08);border-bottom:none}'+
+        '.bz-title{font-size:.62rem;letter-spacing:.34em;text-transform:uppercase;color:#7fb0ff;font-weight:700}'+
+        '.bz-brand{font-size:1.15rem;font-weight:800;letter-spacing:.02em;margin:2px 0 14px;'+
+        'background:linear-gradient(180deg,#f7e7a6,#e6c25c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}'+
+        '.bz-screen{background:radial-gradient(circle at 50% 120%,#10233f,#0a0f1c);border-radius:16px;padding:14px 10px 8px;'+
+        'border:1px solid rgba(120,170,255,.18);box-shadow:inset 0 0 30px rgba(0,40,90,.5)}'+
+        '.bz-gauge{width:100%;height:auto;display:block}'+
+        '.bz-num{fill:#8aa6d8;font-size:11px;font-weight:700;font-family:inherit}'+
+        '.bz-read{font-size:2.5rem;font-weight:800;line-height:1;margin-top:2px;letter-spacing:.01em}'+
+        '.bz-read small{font-size:.9rem;font-weight:700;opacity:.7;margin-left:3px}'+
+        '.bz-read.g{color:#39d98a}.bz-read.y{color:#f2c14e}.bz-read.r{color:#ef4444}.bz-read.m{color:#c8a6ff}'+
+        '.bz-level{min-height:18px;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:#cdd8f0;margin-top:2px}'+
+        '.bz-level .bz-crest{font-size:.95rem}'+
+        '.bz-quote{min-height:34px;font-size:.95rem;font-style:italic;line-height:1.35;color:#fff;margin:8px 6px 2px;font-weight:500}'+
+        '.bz-quote::before{content:"\u201c"}.bz-quote::after{content:"\u201d"}.bz-quote:empty::before,.bz-quote:empty::after{content:""}'+
+        '.bz-blow{margin-top:16px;width:100%;padding:14px;border:none;border-radius:100px;cursor:pointer;user-select:none;'+
+        '-webkit-user-select:none;-webkit-tap-highlight-color:transparent;position:relative;overflow:hidden;'+
+        'font-weight:800;font-size:.92rem;letter-spacing:.05em;color:#0a0a14;'+
+        'background:linear-gradient(135deg,#7fb0ff,#5a86e0);box-shadow:0 8px 22px rgba(90,134,224,.4);transition:transform .1s}'+
+        '.bz-blow:active{transform:scale(.98)}'+
+        '.bz-blow.on{background:linear-gradient(135deg,#f2c14e,#e0992f)}'+
+        '.bz-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.28);pointer-events:none}'+
+        '.bz-blow span{position:relative;z-index:1}'+
+        '.bz-foot{font-size:.66rem;color:#7e8aa6;margin-top:12px;letter-spacing:.06em}'+
+        '.bz-actions{display:flex;gap:10px;margin-top:12px}'+
+        '.bz-btn{flex:1;padding:11px;border-radius:100px;border:1px solid rgba(127,176,255,.4);cursor:pointer;'+
+        'font-weight:700;font-size:.78rem;color:#cdd8f0;background:transparent}'+
+        '.bz-btn:hover{background:rgba(127,176,255,.12)}'+
+        '.bz-close-x{position:fixed;top:18px;right:20px;z-index:3;color:#9fb0d6;font-size:1.6rem;line-height:1;cursor:pointer;opacity:.7}'+
+        '.bz-close-x:hover{opacity:1}';
+      document.head.appendChild(s);
+    }
+
+    var needle, tweenRaf=null, wobbleRaf=null, blowing=false, holdStart=0, revealing=false, readEl, levelEl, quoteEl, blowBtn, fillEl;
+
+    function degFor(t){ return -90 + (Math.max(0,Math.min(3,t))/3)*180; }
+    function setNeedle(d){ if(needle) needle.setAttribute('transform','rotate('+d.toFixed(1)+' 110 120)'); }
+
+    function tweenNeedle(from,to,cb){
+      cancelAnimationFrame(tweenRaf);
+      var dur=650,t0=null;
+      function step(ts){
+        if(t0===null)t0=ts;
+        var p=Math.min((ts-t0)/dur,1), e=1-Math.pow(1-p,3);
+        setNeedle(from+(to-from)*e);
+        if(p<1) tweenRaf=requestAnimationFrame(step); else if(cb) cb();
+      }
+      tweenRaf=requestAnimationFrame(step);
+    }
+
+    function startBlow(){
+      if(revealing||blowing) return;
+      blowing=true; holdStart=performance.now();
+      blowBtn.classList.add('on'); blowBtn.querySelector('span').textContent='Soplando\u2026';
+      readEl.className='bz-read'; readEl.innerHTML='&nbsp;'; levelEl.innerHTML=''; quoteEl.textContent='';
+      var base=-90;
+      function wob(ts){
+        if(!blowing) return;
+        var held=(ts-holdStart);
+        var climb=Math.min(held/1400,1);
+        var d=base + climb*150 + (Math.random()*22-11);
+        setNeedle(Math.max(-92,Math.min(92,d)));
+        fillEl.style.width=(climb*100)+'%';
+        if(held>2000){ stopBlow(); return; }
+        wobbleRaf=requestAnimationFrame(wob);
+      }
+      wobbleRaf=requestAnimationFrame(wob);
+    }
+
+    function stopBlow(){
+      if(!blowing) return;
+      blowing=false; cancelAnimationFrame(wobbleRaf);
+      blowBtn.classList.remove('on'); blowBtn.querySelector('span').textContent='Soplar';
+      fillEl.style.width='0';
+      revealing=true;
+      var m=ALC[Math.floor(Math.random()*ALC.length)];
+      var cur=-90; try{ var tr=needle.getAttribute('transform'); cur=parseFloat(tr.replace('rotate(',''))||(-90); }catch(e){}
+      if(m.t===null){
+        tweenNeedle(cur, (Math.random()*120-60), function(){ reveal(m); });
+      }else{
+        tweenNeedle(cur, degFor(m.t), function(){ reveal(m); });
+      }
+    }
+
+    function reveal(m){
+      var cls,val;
+      if(m.t===null){ cls='m'; val='??'; }
+      else{ cls = m.t>2 ? 'r' : (m.t>=1 ? 'y' : 'g'); val=m.t.toFixed(1).replace('.',','); }
+      readEl.className='bz-read '+cls;
+      readEl.innerHTML = val + '<small>g/L</small>';
+      levelEl.innerHTML = 'Nivel '+m.a+' <span class="bz-crest">'+crestOf(m.a)+'</span>';
+      quoteEl.textContent = m.f;
+      revealing=false;
+    }
+
+    function show(){
+      if(document.getElementById('bz-overlay')) return;
+      injectStyles();
+      var ov=document.createElement('div'); ov.id='bz-overlay';
+      ov.innerHTML =
+        '<div class="bz-close-x">\u00d7</div>'+
+        '<div class="bz-device">'+
+          '<div class="bz-title">Control de alcoholemia</div>'+
+          '<div class="bz-brand">Alcohol\u00edmetro Els Amics\u2122</div>'+
+          '<div class="bz-screen">'+
+            '<svg class="bz-gauge" viewBox="0 0 220 150">'+
+              '<defs><linearGradient id="bzgrad" x1="0" y1="0" x2="1" y2="0">'+
+                '<stop offset="0" stop-color="#39d98a"/><stop offset=".5" stop-color="#f2c14e"/><stop offset="1" stop-color="#ef4444"/>'+
+              '</linearGradient></defs>'+
+              '<path d="M20 120 A90 90 0 0 1 200 120" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="20" stroke-linecap="round"/>'+
+              '<path d="M20 120 A90 90 0 0 1 200 120" fill="none" stroke="url(#bzgrad)" stroke-width="14" stroke-linecap="round"/>'+
+              '<text class="bz-num" x="18" y="140" text-anchor="middle">0</text>'+
+              '<text class="bz-num" x="110" y="22" text-anchor="middle">1,5</text>'+
+              '<text class="bz-num" x="202" y="140" text-anchor="middle">3</text>'+
+              '<polygon id="bz-needle" points="106,118 114,118 110,38" fill="#f7e7a6" transform="rotate(-90 110 120)"/>'+
+              '<circle cx="110" cy="120" r="9" fill="#0a0f1c" stroke="#f7e7a6" stroke-width="2"/>'+
+            '</svg>'+
+            '<div class="bz-read" id="bz-read">0,0<small>g/L</small></div>'+
+            '<div class="bz-level" id="bz-level"></div>'+
+          '</div>'+
+          '<div class="bz-quote" id="bz-quote"></div>'+
+          '<button class="bz-blow" id="bz-blow"><span class="bz-fill" id="bz-fill"></span><span>Soplar</span></button>'+
+          '<div class="bz-foot">Mant\u00e9n pulsado para soplar (o barra espaciadora)</div>'+
+          '<div class="bz-actions"><button class="bz-btn" id="bz-close">Cerrar</button></div>'+
+        '</div>';
+      ov.addEventListener('click', function(e){
+        if(e.target===ov || (e.target&&e.target.className==='bz-close-x')) close();
+      });
+      document.body.appendChild(ov);
+      document.body.style.overflow='hidden';
+
+      needle=document.getElementById('bz-needle');
+      readEl=document.getElementById('bz-read'); levelEl=document.getElementById('bz-level');
+      quoteEl=document.getElementById('bz-quote'); blowBtn=document.getElementById('bz-blow');
+      fillEl=document.getElementById('bz-fill');
+      setNeedle(-90);
+
+      blowBtn.addEventListener('pointerdown', function(e){ e.preventDefault(); startBlow(); });
+      window.addEventListener('pointerup', stopBlow);
+      blowBtn.addEventListener('click', function(e){ e.stopPropagation(); });
+      document.getElementById('bz-close').addEventListener('click', function(e){ e.stopPropagation(); close(); });
+    }
+
+    function close(){
+      cancelAnimationFrame(tweenRaf); cancelAnimationFrame(wobbleRaf);
+      blowing=false; revealing=false;
+      window.removeEventListener('pointerup', stopBlow);
+      var ov=document.getElementById('bz-overlay'); if(ov) ov.remove();
+      document.body.style.overflow='';
+    }
+
+    document.addEventListener('keydown', function(e){
+      var open=document.getElementById('bz-overlay');
+      if(e.key==='Escape'){ close(); return; }
+      if(open && (e.code==='Space'||e.key===' ')){ e.preventDefault(); startBlow(); return; }
+      var tag=(e.target&&e.target.tagName)||'';
+      if(tag==='INPUT'||tag==='TEXTAREA') return;
+      if(e.key && e.key.length===1){
+        buf=(buf+e.key.toLowerCase()).slice(-MAXLEN);
+        for(var i=0;i<SECRETS.length;i++){
+          if(buf.slice(-SECRETS[i].length)===SECRETS[i]){ show(); break; }
+        }
+      }
+    });
+    document.addEventListener('keyup', function(e){
+      if(document.getElementById('bz-overlay') && (e.code==='Space'||e.key===' ')) stopBlow();
+    });
+  })();
 })();
 </script>
 </body>
