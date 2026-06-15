@@ -590,8 +590,8 @@ nav.is-scrollable:not(.at-end)::after{opacity:1}
     if(!v){fail('Escribe el código primero.');return;}
     hint.classList.remove('err');hint.textContent='';label.textContent='Verificando…';
     var h=await sha256(v);
-    var hoy=await dailyCode(0);
-    if(ALLOWED.indexOf(h)!==-1 || v===hoy){try{sessionStorage.setItem('els_ok','1');}catch(e){}enter();}
+    var PASS='caution';
+    if(ALLOWED.indexOf(h)!==-1 || v===PASS){try{sessionStorage.setItem('els_ok','1');}catch(e){}enter();}
     else fail();
   }
 
