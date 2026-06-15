@@ -1238,6 +1238,110 @@ function showPage(id) {
     modal.className = 'open'; modal.scrollTop = 0;
     document.body.style.overflow = 'hidden';
   };
+
+  /* ─── Easter egg: teclea "minguell" → cartel SE BUSCA ─── */
+  (function(){
+    var SECRET = 'minguell', buf = '';
+
+    function injectStyles(){
+      if(document.getElementById('seb-style')) return;
+      var s = document.createElement('style');
+      s.id = 'seb-style';
+      s.textContent =
+        '#seb-overlay{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;'+
+        'background:radial-gradient(circle at center,rgba(20,12,4,.82),rgba(0,0,0,.94));'+
+        'backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:seb-fade .55s ease both;cursor:pointer}'+
+        '@keyframes seb-fade{from{opacity:0}to{opacity:1}}'+
+        '@keyframes seb-drop{0%{opacity:0;transform:translateY(22px) rotate(-3deg) scale(.93);filter:blur(8px)}'+
+        '100%{opacity:1;transform:translateY(0) rotate(-1.2deg) scale(1);filter:blur(0)}}'+
+        '.seb-poster{position:relative;width:min(360px,86vw);padding:26px 24px 20px;cursor:default;'+
+        'font-family:"Rockwell","Courier New",Georgia,serif;color:#3a2412;text-align:center;'+
+        'background:repeating-linear-gradient(0deg,#e7d3a6,#e7d3a6 2px,#e3cd9d 3px,#e7d3a6 4px),'+
+        'radial-gradient(circle at 30% 20%,#efe0bb,#dcc491 70%,#cdb27a 100%);'+
+        'box-shadow:0 24px 60px rgba(0,0,0,.7),inset 0 0 60px rgba(120,80,30,.45),inset 0 0 0 2px rgba(90,55,20,.5);'+
+        'border:3px solid #6b4a23;border-radius:3px;animation:seb-drop .85s cubic-bezier(.16,1,.3,1) both;'+
+        'background-blend-mode:multiply}'+
+        '.seb-poster::before{content:"";position:absolute;inset:7px;border:2px solid rgba(90,55,20,.55);border-radius:2px;pointer-events:none}'+
+        '.seb-pin{position:absolute;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8a6a3a,#3c2a12);'+
+        'box-shadow:0 2px 3px rgba(0,0,0,.5)}'+
+        '.seb-pin.tl{top:9px;left:9px}.seb-pin.tr{top:9px;right:9px}.seb-pin.bl{bottom:9px;left:9px}.seb-pin.br{bottom:9px;right:9px}'+
+        '.seb-wanted{font-size:2.7rem;letter-spacing:.12em;font-weight:700;line-height:1;margin:2px 0 2px;'+
+        'text-shadow:1px 1px 0 rgba(120,80,30,.4)}'+
+        '.seb-sub{font-size:.72rem;letter-spacing:.35em;margin-bottom:14px;opacity:.8}'+
+        '.seb-rule{height:2px;background:#6b4a23;margin:10px 14px;opacity:.55}'+
+        '.seb-photo{width:150px;height:150px;object-fit:cover;object-position:center 18%;border:4px solid #5a3a18;border-radius:2px;margin:6px auto 12px;'+
+        'display:block;filter:sepia(.65) contrast(1.05) brightness(.98);box-shadow:0 6px 14px rgba(0,0,0,.4)}'+
+        '.seb-mono{width:150px;height:150px;border:4px solid #5a3a18;margin:6px auto 12px;display:flex;align-items:center;'+
+        'justify-content:center;font-size:4rem;background:#cdb27a;color:#5a3a18}'+
+        '.seb-name{font-size:1.45rem;letter-spacing:.05em;font-weight:700}'+
+        '.seb-akarole{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;opacity:.75;margin-bottom:8px}'+
+        '.seb-crime{font-size:.82rem;line-height:1.45;margin:8px 6px 2px;font-style:italic;opacity:.92}'+
+        '.seb-reward-lbl{font-size:.7rem;letter-spacing:.3em;margin-top:14px;opacity:.8}'+
+        '.seb-reward{font-size:2rem;font-weight:700;letter-spacing:.04em;margin-top:2px}'+
+        '.seb-reward small{display:block;font-size:.72rem;letter-spacing:.04em;font-weight:400;font-style:italic;opacity:.8;margin-top:3px}'+
+        '.seb-last{font-size:.72rem;margin-top:12px;opacity:.85}'+
+        '.seb-foot{font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;margin-top:14px;opacity:.65}'+
+        '.seb-hint{position:fixed;bottom:18px;left:0;right:0;text-align:center;color:#c9a86a;font-family:-apple-system,sans-serif;'+
+        'font-size:.7rem;letter-spacing:.12em;opacity:.7}';
+      document.head.appendChild(s);
+    }
+
+    function findMinguell(){
+      try{
+        for(var i=0;i<TOTY_DATA.length;i++){
+          var a = (TOTY_DATA[i].alias||'').toLowerCase();
+          if(a.indexOf('minguell')>-1) return TOTY_DATA[i];
+        }
+      }catch(e){}
+      return null;
+    }
+
+    function show(){
+      if(document.getElementById('seb-overlay')) return;
+      injectStyles();
+      var m = findMinguell() || {};
+      var photo = m.img
+        ? '<img class="seb-photo" src="'+m.img+'" alt="Minguell">'
+        : '<div class="seb-mono">?</div>';
+
+      var ov = document.createElement('div');
+      ov.id = 'seb-overlay';
+      ov.innerHTML =
+        '<div class="seb-poster" onclick="event.stopPropagation()">'+
+          '<span class="seb-pin tl"></span><span class="seb-pin tr"></span>'+
+          '<span class="seb-pin bl"></span><span class="seb-pin br"></span>'+
+          '<div class="seb-wanted">SE BUSCA</div>'+
+          '<div class="seb-sub">VIVO O LIADO</div>'+
+          '<div class="seb-rule"></div>'+
+          photo+
+          '<div class="seb-name">'+(m.name||'Joan Minguell')+'</div>'+
+          '<div class="seb-akarole">alias \u201cEl Fantasma del Tractor\u201d</div>'+
+          '<div class="seb-crime">Reclamado por abandono reiterado del grupo, fuga en tractor y desaparici\u00f3n continuada desde que tiene novia.</div>'+
+          '<div class="seb-reward-lbl">RECOMPENSA</div>'+
+          '<div class="seb-reward">10.000 $ EN ORO<small>o su peso en cerveza \u00b7 negociable</small></div>'+
+          '<div class="seb-last">\u00daltima vez visto: a bordo de un tractor, rumbo desconocido.</div>'+
+          '<div class="seb-foot">Por orden del Sheriff de Els Amics\u2122</div>'+
+        '</div>'+
+        '<div class="seb-hint">Haz clic fuera o pulsa ESC para cerrar</div>';
+      ov.addEventListener('click', close);
+      document.body.appendChild(ov);
+    }
+
+    function close(){
+      var ov = document.getElementById('seb-overlay');
+      if(ov) ov.remove();
+    }
+
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){ close(); return; }
+      var t = (e.target && e.target.tagName) || '';
+      if(t === 'INPUT' || t === 'TEXTAREA') return;
+      if(e.key && e.key.length === 1){
+        buf = (buf + e.key.toLowerCase()).slice(-SECRET.length);
+        if(buf === SECRET) show();
+      }
+    });
+  })();
 })();
 </script>
 </body>
